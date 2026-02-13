@@ -12,6 +12,10 @@ This repo includes `setup_new_mac.sh` to bootstrap a new macOS machine for your 
    - Visual Studio Code (`visual-studio-code` cask)
 5. Optionally installs dev tools group (with flag):
    - `git`, `jq`, `fzf`, `ripgrep`, `tmux`
+6. Optionally installs Go tools group (with flag):
+   - `go`
+7. Optionally installs JavaScript/TypeScript tools group (with flag):
+   - `node`, `pnpm`
 
 ## Usage
 
@@ -26,6 +30,18 @@ Install with optional dev tools:
 
 ```bash
 ./setup_new_mac.sh --dev-tools
+```
+
+Install with optional Go tools:
+
+```bash
+./setup_new_mac.sh --go-tools
+```
+
+Install with optional JavaScript/TypeScript tools:
+
+```bash
+./setup_new_mac.sh --js-ts-tools
 ```
 
 Install all optional groups:

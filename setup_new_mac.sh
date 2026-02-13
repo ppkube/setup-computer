@@ -2,6 +2,8 @@
 set -euo pipefail
 
 INSTALL_DEV_TOOLS=0
+INSTALL_GO_TOOLS=0
+INSTALL_JS_TS_TOOLS=0
 
 log() {
   printf '[setup] %s\n' "$*"
@@ -33,7 +35,9 @@ Usage: ./setup_new_mac.sh [options]
 
 Options:
   --dev-tools   Install optional dev tools: git, jq, fzf, ripgrep, tmux
-  --all         Install all optional groups (currently same as --dev-tools)
+  --go-tools    Install optional Go tools: go
+  --js-ts-tools Install optional JavaScript/TypeScript tools: node, pnpm
+  --all         Install all optional groups
   -h, --help    Show this help and exit
 EOF
 }
@@ -45,8 +49,18 @@ parse_args() {
         INSTALL_DEV_TOOLS=1
         shift
         ;;
+      --go-tools)
+        INSTALL_GO_TOOLS=1
+        shift
+        ;;
+      --js-ts-tools)
+        INSTALL_JS_TS_TOOLS=1
+        shift
+        ;;
       --all)
         INSTALL_DEV_TOOLS=1
+        INSTALL_GO_TOOLS=1
+        INSTALL_JS_TS_TOOLS=1
         shift
         ;;
       -h|--help)
@@ -203,13 +217,40 @@ EOF
 install_common_tools() {
   log "Installing common tools..."
   brew install uv
-  brew install --cask visual-studio-code
+  install_cask_if_missing "visual-studio-code" "/Applications/Visual Studio Code.app"
+}
+
+install_cask_if_missing() {
+  local cask="$1"
+  local app_path="$2"
+
+  if brew list --cask "$cask" >/dev/null 2>&1; then
+    log "Cask already installed: $cask"
+    return
+  fi
+
+  if [[ -d "$app_path" ]]; then
+    log "App already present at $app_path. Skipping cask install for $cask."
+    return
+  fi
+
+  brew install --cask "$cask"
 }
 
 install_optional_tools() {
   if [[ "$INSTALL_DEV_TOOLS" -eq 1 ]]; then
     log "Installing optional dev tools..."
     brew install git jq fzf ripgrep tmux
+  fi
+
+  if [[ "$INSTALL_GO_TOOLS" -eq 1 ]]; then
+    log "Installing optional Go tools..."
+    brew install go
+  fi
+
+  if [[ "$INSTALL_JS_TS_TOOLS" -eq 1 ]]; then
+    log "Installing optional JavaScript/TypeScript tools..."
+    brew install node pnpm
   fi
 }
 
