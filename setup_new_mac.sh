@@ -264,6 +264,35 @@ install_cask_if_missing() {
   brew install --cask "$cask"
 }
 
+install_ripgrep() {
+  if command -v rg >/dev/null 2>&1; then
+    log "ripgrep already installed: $(rg --version | head -n1)"
+    return
+  fi
+
+  local arch
+  arch="$(uname -m)"
+  local arch_slug="x86_64"
+  if [[ "$arch" == "arm64" ]]; then
+    arch_slug="aarch64"
+  fi
+
+  local version
+  version="$(curl -fsSL https://api.github.com/repos/BurntSushi/ripgrep/releases/latest | \
+    sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p')"
+  local tarball="ripgrep-${version}-${arch_slug}-apple-darwin.tar.gz"
+
+  log "Installing ripgrep ${version} from GitHub releases..."
+  local tmp_dir
+  tmp_dir="$(mktemp -d)"
+  curl -fsSL "https://github.com/BurntSushi/ripgrep/releases/latest/download/${tarball}" | \
+    tar xz -C "$tmp_dir"
+  cp "$tmp_dir/ripgrep-${version}-${arch_slug}-apple-darwin/rg" "$HOME/.local/bin/rg"
+  chmod +x "$HOME/.local/bin/rg"
+  rm -rf "$tmp_dir"
+  log "ripgrep installed to ~/.local/bin/rg"
+}
+
 install_fnm() {
   if command -v fnm >/dev/null 2>&1; then
     log "fnm already installed: $(fnm --version)"
@@ -290,7 +319,12 @@ install_fnm() {
 install_optional_tools() {
   if [[ "$INSTALL_DEV_TOOLS" -eq 1 ]]; then
     log "Installing optional dev tools..."
-    brew install git jq fzf ripgrep tmux
+    if [[ "$MACOS_MAJOR_VERSION" -lt 13 ]]; then
+      brew install git jq fzf tmux
+      install_ripgrep
+    else
+      brew install git jq fzf ripgrep tmux
+    fi
   fi
 
   if [[ "$INSTALL_GO_TOOLS" -eq 1 ]]; then

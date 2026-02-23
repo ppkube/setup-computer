@@ -60,7 +60,9 @@ Show options:
 ## Notes
 
 - Requires macOS 12 (Monterey) or later.
-- On macOS 12, Node.js 22 LTS is installed via [fnm](https://github.com/Schniz/fnm) instead of Homebrew (Homebrew cannot build Node on macOS 12). fnm is placed in `~/.local/bin/` and loaded automatically via `.bashrc`.
+- On macOS 12, Homebrew cannot build Rust-dependent formulae, so the script works around this:
+  - **ripgrep** is downloaded as a prebuilt binary from GitHub releases into `~/.local/bin/`.
+  - **Node.js 22 LTS** is installed via [fnm](https://github.com/Schniz/fnm) (also a prebuilt binary in `~/.local/bin/`), with **pnpm** installed via npm. fnm is loaded automatically via `.bashrc`.
 - May prompt for:
   - Xcode Command Line Tools install
   - `sudo` when appending Bash path to `/etc/shells`
