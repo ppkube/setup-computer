@@ -60,7 +60,7 @@ Show options:
 ## Notes
 
 - Requires macOS 12 (Monterey) or later.
-- On macOS 12, Node.js 22 LTS is installed instead of the latest (Node 24+ requires macOS 13.5+).
+- On macOS 12, Node.js 22 LTS is installed via [fnm](https://github.com/Schniz/fnm) instead of Homebrew (Homebrew cannot build Node on macOS 12). fnm is placed in `~/.local/bin/` and loaded automatically via `.bashrc`.
 - May prompt for:
   - Xcode Command Line Tools install
   - `sudo` when appending Bash path to `/etc/shells`

@@ -162,6 +162,11 @@ EOF
   cat > "$bashrc" <<'EOF'
 export PATH="$HOME/.local/bin:$PATH"
 
+# fnm (Fast Node Manager) environment.
+if command -v fnm >/dev/null 2>&1; then
+  eval "$(fnm env)"
+fi
+
 # Only set prompt for interactive shells.
 case $- in
   *i*) ;;
@@ -259,6 +264,29 @@ install_cask_if_missing() {
   brew install --cask "$cask"
 }
 
+install_fnm() {
+  if command -v fnm >/dev/null 2>&1; then
+    log "fnm already installed: $(fnm --version)"
+    return
+  fi
+
+  local arch
+  arch="$(uname -m)"
+  local zip_name="fnm-macos.zip"
+  if [[ "$arch" == "arm64" ]]; then
+    zip_name="fnm-arm64-macos.zip"
+  fi
+
+  log "Installing fnm from GitHub releases..."
+  local tmp_zip
+  tmp_zip="$(mktemp)"
+  curl -fsSL "https://github.com/Schniz/fnm/releases/latest/download/${zip_name}" -o "$tmp_zip"
+  unzip -o "$tmp_zip" -d "$HOME/.local/bin"
+  rm -f "$tmp_zip"
+  chmod +x "$HOME/.local/bin/fnm"
+  log "fnm installed to ~/.local/bin/fnm"
+}
+
 install_optional_tools() {
   if [[ "$INSTALL_DEV_TOOLS" -eq 1 ]]; then
     log "Installing optional dev tools..."
@@ -273,9 +301,11 @@ install_optional_tools() {
   if [[ "$INSTALL_JS_TS_TOOLS" -eq 1 ]]; then
     log "Installing optional JavaScript/TypeScript tools..."
     if [[ "$MACOS_MAJOR_VERSION" -lt 13 ]]; then
-      log "macOS < 13 detected; installing node@22 (LTS) instead of latest."
-      brew install node@22 pnpm
-      brew link --overwrite node@22
+      log "macOS < 13 detected; installing Node.js 22 via fnm (Homebrew cannot build Node on this version)."
+      install_fnm
+      eval "$(fnm env)"
+      fnm install 22
+      npm install -g pnpm
     else
       brew install node pnpm
     fi
