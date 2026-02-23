@@ -27,6 +27,13 @@ require_macos() {
     printf 'This script is for macOS only.\n' >&2
     exit 1
   fi
+
+  MACOS_MAJOR_VERSION="$(sw_vers -productVersion | cut -d. -f1)"
+  if [[ "$MACOS_MAJOR_VERSION" -lt 12 ]]; then
+    printf 'macOS 12 (Monterey) or later is required. Detected version: %s\n' \
+      "$(sw_vers -productVersion)" >&2
+    exit 1
+  fi
 }
 
 print_usage() {
@@ -84,7 +91,9 @@ ensure_xcode_clt() {
 
   log "Installing Xcode Command Line Tools..."
   xcode-select --install || true
-  warn "If prompted, finish the GUI install, then run this script again."
+  printf '\nXcode Command Line Tools install has been triggered.\n'
+  printf 'Please complete the GUI install, then re-run this script.\n'
+  exit 0
 }
 
 install_homebrew() {
@@ -99,16 +108,17 @@ install_homebrew() {
 }
 
 load_brew_shellenv() {
-  if command -v brew >/dev/null 2>&1; then
-    eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || true)"
-    eval "$(/usr/local/bin/brew shellenv 2>/dev/null || true)"
-    eval "$(brew shellenv)"
-  fi
+  eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || true)"
+  eval "$(/usr/local/bin/brew shellenv 2>/dev/null || true)"
 }
 
 install_latest_bash() {
-  log "Installing latest Bash via Homebrew..."
-  brew install bash
+  if brew list bash >/dev/null 2>&1; then
+    log "Bash already installed via Homebrew."
+  else
+    log "Installing latest Bash via Homebrew..."
+    brew install bash
+  fi
 
   local bash_path
   bash_path="$(brew --prefix)/bin/bash"
@@ -134,6 +144,8 @@ configure_bash_files() {
   local bash_aliases="${home}/.bash_aliases"
   local bashrc="${home}/.bashrc"
   local bash_profile="${home}/.bash_profile"
+
+  mkdir -p "$HOME/.local/bin"
 
   backup_if_exists "$bash_aliases"
   backup_if_exists "$bashrc"
@@ -214,9 +226,19 @@ EOF
   log "Configured ~/.bash_aliases, ~/.bashrc, and ~/.bash_profile."
 }
 
+install_uv() {
+  if command -v uv >/dev/null 2>&1; then
+    log "uv already installed: $(uv --version)"
+    return
+  fi
+
+  log "Installing uv via standalone installer..."
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+}
+
 install_common_tools() {
   log "Installing common tools..."
-  brew install uv
+  install_uv
   install_cask_if_missing "visual-studio-code" "/Applications/Visual Studio Code.app"
 }
 
@@ -250,7 +272,13 @@ install_optional_tools() {
 
   if [[ "$INSTALL_JS_TS_TOOLS" -eq 1 ]]; then
     log "Installing optional JavaScript/TypeScript tools..."
-    brew install node pnpm
+    if [[ "$MACOS_MAJOR_VERSION" -lt 13 ]]; then
+      log "macOS < 13 detected; installing node@22 (LTS) instead of latest."
+      brew install node@22 pnpm
+      brew link --overwrite node@22
+    else
+      brew install node pnpm
+    fi
   fi
 }
 
@@ -260,6 +288,17 @@ print_summary() {
   brew --version | head -n1 || true
   bash --version | head -n1 || true
   uv --version || true
+  if [[ "$INSTALL_DEV_TOOLS" -eq 1 ]]; then
+    git --version || true
+    jq --version || true
+  fi
+  if [[ "$INSTALL_GO_TOOLS" -eq 1 ]]; then
+    go version || true
+  fi
+  if [[ "$INSTALL_JS_TS_TOOLS" -eq 1 ]]; then
+    node --version || true
+    pnpm --version || true
+  fi
   printf '\nNext steps:\n'
   printf '1) Restart Terminal (or run: exec "$SHELL" -l)\n'
   printf '2) Verify shell: echo "$SHELL"\n'

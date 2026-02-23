@@ -4,17 +4,18 @@ This repo includes `setup_new_mac.sh` to bootstrap a new macOS machine for your 
 
 ## What It Does
 
-1. Installs Homebrew (if missing)
-2. Installs latest Bash from Homebrew and sets it as login shell
-3. Configures Bash prompt + aliases
-4. Installs common tools:
+1. Installs Xcode Command Line Tools (if missing; exits for re-run after GUI install)
+2. Installs Homebrew (if missing)
+3. Installs latest Bash from Homebrew and sets it as login shell
+4. Configures Bash prompt + aliases
+5. Installs common tools:
    - `uv`
    - Visual Studio Code (`visual-studio-code` cask)
-5. Optionally installs dev tools group (with flag):
+6. Optionally installs dev tools group (with flag):
    - `git`, `jq`, `fzf`, `ripgrep`, `tmux`
-6. Optionally installs Go tools group (with flag):
+7. Optionally installs Go tools group (with flag):
    - `go`
-7. Optionally installs JavaScript/TypeScript tools group (with flag):
+8. Optionally installs JavaScript/TypeScript tools group (with flag):
    - `node`, `pnpm`
 
 ## Usage
@@ -58,7 +59,8 @@ Show options:
 
 ## Notes
 
-- macOS only.
+- Requires macOS 12 (Monterey) or later.
+- On macOS 12, Node.js 22 LTS is installed instead of the latest (Node 24+ requires macOS 13.5+).
 - May prompt for:
   - Xcode Command Line Tools install
   - `sudo` when appending Bash path to `/etc/shells`
@@ -81,6 +83,7 @@ Show options:
   - `la='ls -A'`
   - `l='ls -CF'`
   - `ping2='ping -i 0.1'`
+- `$HOME/.local/bin` prepended to `$PATH` in `~/.bashrc`
 - `set -o vi` enabled in `~/.bash_profile`
 
 ## After Running
